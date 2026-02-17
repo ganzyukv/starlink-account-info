@@ -1,40 +1,49 @@
 """Starlink API client."""
 
+import os
+from typing import Any, Dict
+
 import requests
-from typing import Dict, Any
 
 
-DEFAULT_API_URL = "https://starlink.com"
+BASE_URL = os.getenv("STARLINK_BASE_URL", "https://starlink.com",)
+ACCESS_COOKIE_NAME = "Starlink.Com.Access.V1"
+DEFAULT_TIMEOUT = 10
 
 
 class StarlinkClient:
-    """Client for interacting with Starlink API V2."""
-    
-    def __init__(self, session_key: str, api_url: str = DEFAULT_API_URL):
-        if not session_key:
-            raise ValueError("Session key is required")
-        self.session_key = session_key
-        self.api_url = api_url
-    
-    def get_account_info(self) -> Dict[str, Any]:
-        """Retrieve account information from Starlink API."""
-        url = f"{self.api_url}/api/public/v2/account"
-        
+    """Client for interacting with Starlink API"""
+
+    def __init__(
+        self,
+        token: str,
+        base_url: str = BASE_URL,
+        timeout: int = DEFAULT_TIMEOUT,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self.session = requests.Session()
+        self.session.cookies.set(ACCESS_COOKIE_NAME, token)
+
+    def get_user_info(self) -> Dict[str, Any]:
+        response = self.session.get(
+            f"{self.base_url}/api/auth-rp/auth/user",
+            timeout=self.timeout,
+        )
+
+        self._check_response(response)
+
         try:
-            response = requests.get(
-                url,
-                headers={
-                    'Authorization': f'Bearer {self.session_key}',
-                    'Accept': 'application/json'
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 401:
-                raise Exception("Invalid or expired bearer token")
-            
-            response.raise_for_status()
             return response.json()
-            
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"API request failed: {str(e)}")
+        except ValueError as exc:
+            raise RuntimeError("Server returned non-JSON response.") from exc
+
+    def _check_response(self, response: requests.Response) -> None:
+        if response.status_code == 401:
+            raise RuntimeError("Token is invalid or expired.")
+        if response.status_code == 403:
+            raise RuntimeError("Access forbidden.")
+        if response.status_code >= 500:
+            raise RuntimeError("Starlink server error.")
+
+        response.raise_for_status()

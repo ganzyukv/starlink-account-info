@@ -1,95 +1,90 @@
-# Starlink Account Info Retriever
+# Starlink Account Info
 
-Python console додаток для отримання інформації про Starlink акаунт.
+Отримання інформації про акаунт Starlink напряму через cookie токен.
 
-## Структура
+## Опис
+
+Цей інструмент дозволяє отримати дані про ваш акаунт Starlink (ім’я, email, локаль тощо) використовуючи токен `Starlink.Com.Access.V1`, який зберігається у браузері після входу.
+
+## Використання
+
+### 1. Отримайте токен
+- Увійдіть у акаунт Starlink у браузері.
+- Відкрийте DevTools → Application → Cookies → `Starlink.Com.Access.V1`.
+- Скопіюйте значення токена.
+
+### 2. Встановити залежності
+```bash
+  pip3 install -r requirements.txt
+```
+
+### 3. Запуск із токеном напряму
+```bash
+  python3 main.py --token CfDJ8BrmZteN5jdLoWYoVZAk1aS...
+```
+
+### 4. Використання `.env`
+- Створіть файл `.env` у корені проєкту: 
+
+```bash
+  cp .env.example .env
+```
+- Відредагувати .env
+```env
+  STARLINK_ACCESS_V1=ваш_реальний_токен
+```
+
+- Запустіть:
+```bash
+  python3 main.py
+```
+
+### 5. Поведінка при відсутності токена
+- Якщо токен не передано через `--token` і не знайдено у `.env`, програма видасть помилку:
+  ```
+  RuntimeError: Token not found: pass it via --token or add STARLINK_ACCESS_V1 to .env
+  ```
+
+## Форматований вивід
+Дані акаунта виводяться у зручному форматі через модуль `formatter`:
 
 ```
-starlink-auth-v2/
-├── main.py              # Entry point
-├── requirements.txt     # Dependencies
-├── .env.example        # Configuration template
-├── src/
+======================================================================
+STARLINK ACCOUNT INFORMATION
+======================================================================
+
+Email: useremail@gmail.com
+Email Verified: False
+Family Name: {UserFamily}
+Given Name: {UserName}
+Locale: en-US
+Name: {FullUserName}
+Subject ID: 3ccbb1cc-9809-46ca-9fe1-0d1dea6bf520
+Updated At: 1771319277
+Is Support Agent: False
+Is Spacex Employee: False
+Enabled: False
+Can Manage Clients: False
+Roles: []
+Employee Account Permissions: []
+Permissions: []
+======================================================================
+
+```
+
+## Структура проєкту
+```
+.
+├── main.py
+├── src
 │   ├── __init__.py
-│   ├── auth.py         # OAuth2 authentication
-│   ├── client.py       # API client
-│   ├── mock.py         # Mock implementations
-│   └── formatter.py    # Console output
+│   ├── client.py
+│   └── formatter.py
+├── .env.example
 └── README.md
 ```
 
-## Швидкий старт
-
-### Mock mode (для демонстрації)
-
-```bash
-python3 main.py --mock --email demo --password demo
-```
-
-### З реальним API
-
-```bash
-# Встановити залежності
-pip3 install -r requirements.txt
-
-# З credentials
-python3 main.py --client-id "your_id" --client-secret "your_secret"
-
-# З bearer token
-python3 main.py --session-key "your_token"
-
-# Через .env
-cp .env.example .env
-# Відредагувати .env
-python3 main.py
-```
-
-## Команди
-
-```bash
-# Mock mode (demo дані, без реального API)
-python3 main.py --mock
-
-# З session key
-python3 main.py --session-key "your_bearer_token"
-
-# З client credentials
-python3 main.py --client-id "your_id" --client-secret "your_secret"
-
-# Синоніми
-python3 main.py --email "your_id" --password "your_secret"
-
-# Через .env
-cp .env.example .env
-python3 main.py
-
-# Довідка
-python3 main.py --help
-```
-
-## Параметри
-
-- `--mock` - Mock mode (демо дані без реального API)
-- `--session-key` - Bearer token (пропускає аутентифікацію)
-- `--client-id`, `--email` - Service account client ID
-- `--client-secret`, `--password` - Service account secret
-- `--api-url` - API base URL (default: https://starlink.com)
-- `--help` - Довідка
-
 ## Залежності
-
-Обов'язкові:
-- `requests` - для HTTP запитів
-- `python-dotenv` - для .env файлів
-
-```bash
-pip3 install -r requirements.txt
-```
-
-## API Reference
-
-- Authentication: https://starlink.readme.io/docs/authentication
-  - Token: `POST /api/auth/connect/token` 
-- Swagger UI: https://starlink.com/api/public/swagger/index.html?urls.primaryName=V2
-- Endpoints:
-  - Account: `GET /api/public/v2/account`
+- Python 3.9+
+- [requests](https://pypi.org/project/requests/)
+- python-dotenv [(pypi.org in Bing)](https://www.bing.com/search?q="https%3A%2F%2Fpypi.org%2Fproject%2Fpython-dotenv%2F")
